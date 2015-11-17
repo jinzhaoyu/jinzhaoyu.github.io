@@ -9,11 +9,11 @@
 于是乎各种综合手段就都会用上了，比如分出一个守护进程，这个进程做的都是轻量的事情，甚至只检测主要进程的存活性。同时又在这个进程中启动一个前台服务（Foreground">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Android - 琢磨隐藏前台服务的过程-隐藏的!">
-<meta property="og:url" content="http://yoursite.com/2015/11/17/android-hidden-foreground-service/index.html">
+<meta property="og:url" content="http://jinzhaoyu.github.io/2015/11/17/android-hidden-foreground-service/index.html">
 <meta property="og:site_name" content="找鱼之家">
 <meta property="og:description" content="在国内，Android平台下的应用因为种种原因，都必须要各自做各自的推送通道。然而，由于Android系统的特性，这些需要保持通道连接的应用，又要想方设法的防止被系统杀掉。（这时候真的觉得Apple的APNs 是一个神一样的存在！）
 于是乎各种综合手段就都会用上了，比如分出一个守护进程，这个进程做的都是轻量的事情，甚至只检测主要进程的存活性。同时又在这个进程中启动一个前台服务（Foreground">
-<meta property="og:updated_time" content="2015-11-17T11:46:46.000Z">
+<meta property="og:updated_time" content="2015-11-17T12:12:32.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Android - 琢磨隐藏前台服务的过程-隐藏的!">
 <meta name="twitter:description" content="在国内，Android平台下的应用因为种种原因，都必须要各自做各自的推送通道。然而，由于Android系统的特性，这些需要保持通道连接的应用，又要想方设法的防止被系统杀掉。（这时候真的觉得Apple的APNs 是一个神一样的存在！）
@@ -61,7 +61,7 @@
         <a id="nav-search-btn" class="nav-icon" title="Search"></a>
       </nav>
       <div id="search-form-wrap">
-        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://jinzhaoyu.github.io"></form>
       </div>
     </div>
   </div>
@@ -70,7 +70,7 @@
         <section id="main"><article id="post-android-hidden-foreground-service" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2015/11/17/android-hidden-foreground-service/" class="article-date">
-  <time datetime="2015-11-17T11:46:46.000Z" itemprop="datePublished">2015-11-17</time>
+  <time datetime="2015-11-17T12:12:32.000Z" itemprop="datePublished">2015-11-17</time>
 </a>
     
   </div>
@@ -90,176 +90,46 @@
     <div class="article-entry" itemprop="articleBody">
       
         <p>在国内，Android平台下的应用因为种种原因，都必须要各自做各自的推送通道。然而，由于Android系统的特性，这些需要保持通道连接的应用，又要想方设法的防止被系统杀掉。（这时候真的觉得Apple的APNs 是一个神一样的存在！）</p>
-<pre><code>于是乎各种综合手段就都会用上了，比如分出一个守护进程，这个进程做的都是轻量的事情，甚至只检测主要进程的存活性。同时又在这个进程中启动一个前台服务（Foreground Service），尽可能减少这个守护进程被系统回收的机会。这里我就只说一下前台服务的事。
-
-Android 系统的内存回收真正的执行者是 <span class="function"><span class="title">LowMemoryKiller</span><span class="params">(这里不做过多描述，可以参考： http://www.cnblogs.com/angeldevil/archive/<span class="number">2013</span>/<span class="number">05</span>/<span class="number">21</span>/<span class="number">3090872</span>.html)</span></span> ，它将进程分了几个层次，其中最高层次的是：
-</code></pre><p>// This is the process running the current foreground app.  We’d really<br>// rather not kill it!<br>static final int FOREGROUND_APP_ADJ = 0;</p>
-<pre><code>也就是说，前台进程是最后了，逼不得已的情况下才会去释放它占用的内存的。前台进程就是当前正在前台显示的，用户正在操作的界面，或者是一个前台的服务。
-
-<span class="keyword">Android系统要求前台服务必须要发送一个Notification，以便告知用户有应用一直在运行中，让用户感知到这个应用可能会耗费他的电池或流量。但是有些时候，我们确实想隐藏这种Notification，还要保持在前台服务的运行，因为常驻通知栏的图标，有的用户需要，有的用户则强烈要求去掉。
-</span>
- 我们发现，手机QQ有一个前台服务，可是状态栏和通知中心都看不到QQ的任何通知图标，用如下命令可以dump出来系统中正在运行的所有的Service ：
-</code></pre><p>adb shell dumpsys activity services<br>   可以看到手机QQ有三个Service：</p>
-<ul>
-<li>ServiceRecord{43a6db20 u0 com.tencent.mobileqq/.app.CoreService}<br>intent={cmp=com.tencent.mobileqq/.app.CoreService}<br>packageName=com.tencent.mobileqq<br>processName=com.tencent.mobileqq<br>baseDir=/data/app/com.tencent.mobileqq-2.apk<br>dataDir=/data/data/com.tencent.mobileqq<br>app=ProcessRecord{435c1a98 8126:com.tencent.mobileqq/u0a10145}<br>createTime=-9m52s660ms lastActivity=-4m52s742ms<br>executingStart=-4m52s742ms restartTime=-9m52s660ms<br>startRequested=true stopIfKilled=false callStart=true lastStartId=7</li>
-</ul>
-<ul>
-<li>ServiceRecord{4378c818 u0 com.tencent.mobileqq/.app.CoreService$KernelService}<br>intent={cmp=com.tencent.mobileqq/.app.CoreService$KernelService}<br>packageName=com.tencent.mobileqq<br>processName=com.tencent.mobileqq<br>baseDir=/data/app/com.tencent.mobileqq-2.apk<br>dataDir=/data/data/com.tencent.mobileqq<br>app=ProcessRecord{435c1a98 8126:com.tencent.mobileqq/u0a10145}<br>isForeground=true foregroundId=537041609 foregroundNoti=Notification(pri=0 icon=7f020314 contentView=com.tencent.mobileqq/0x10900b4 vibrate=null sound=null defaults=0x0 flags=0x62 when=1429702926311 ledARGB=0x0 contentIntent=Y deleteIntent=N contentTitle=QQ正在执行中 contentText=触控来取得更多信息，或停止应用程序 tickerText=N kind=[null])<br>createTime=-9m51s902ms lastActivity=-9m51s902ms<br>executingStart=-9m51s897ms restartTime=-9m51s902ms<br>startRequested=true stopIfKilled=true callStart=true lastStartId=1</li>
-</ul>
-<ul>
-<li>ServiceRecord{43a12670 u0 com.tencent.mobileqq/.msf.service.MsfService}<br>intent={cmp=com.tencent.mobileqq/.msf.service.MsfService}<br>packageName=com.tencent.mobileqq<br>processName=com.tencent.mobileqq:MSF<br>baseDir=/data/app/com.tencent.mobileqq-2.apk<br>dataDir=/data/data/com.tencent.mobileqq<br>app=ProcessRecord{432900e0 3974:com.tencent.mobileqq:MSF/u0a10145}<br>createTime=-8d3h5m17s705ms lastActivity=-9m50s414ms<br>……………………</li>
-</ul>
-<pre><code>注意上面的标红的 .app.CoreService<span class="variable">$KernelService</span> ，其中有一个 isForeground=<span class="literal">true</span> 属性，其值为<span class="literal">true</span>，并且也设置了 foregroundNoti 的值，从这个Notification也看不出来有什么异常。
-</code></pre><p>一开始以为他们用了什么手段搞了个看不见的通知，比如透明的图标或者高度为0的RemoteView，我也按这种思路去尝试了下，总有一个占位的Notification在。再 dump 出 Notification ：</p>
-<p>adb shell dumpsys statusbar<br>    查看 Notification list ，可以看到我做的透明的通知，却看不到有他们的任何 StatusBarNotification 那么它是怎么做到隐藏这个通知的呢？试试反编，看看他们的代码！<br>    于是我就用 Android反编工具 试着反编手机QQ最新版 5.5.1.2435 ，直接就失败了，因为他们做了反apkTool的工作，无法用apkTool去解压他们的apk包。没关系，那我就直接解压缩QQ的安装包，毕竟apk也就是一种zip格式嘛。unzip解压后，可以看到目录中有一个 9.9M 的 classes.dex , 用 dex2jar 2.0 反编译它： </p>
-<p>./decompileAndroid/dex2jar-2.0/d2j-dex2jar.sh -o source.jar classes.dex<br>    竟然成功了！！用JD—GUI，打开这个source.jar文件，找到 CoreService 和其内部类 KernelService ： com.tencent.mobileqq.app.CoreService 、 com.tencent.mobileqq.app.CoreService$KernelService ,代码内容我就不贴出来了，有兴趣的同学可以自己动动手或者从附件中下载。这里我只说下我理解的大致过程：</p>
+<p>于是乎各种综合手段就都会用上了，比如分出一个守护进程，这个进程做的都是轻量的事情，甚至只检测主要进程的存活性。同时又在这个进程中启动一个前台服务（Foreground Service），尽可能减少这个守护进程被系统回收的机会。这里我就只说一下前台服务的事。</p>
+<p>Android 系统的内存回收真正的执行者是 LowMemoryKiller(这里不做过多描述，可以参考： <a href="http://www.cnblogs.com/angeldevil/archive/2013/05/21/3090872.html" target="_blank" rel="external">http://www.cnblogs.com/angeldevil/archive/2013/05/21/3090872.html</a>) ，它将进程分了几个层次，其中最高层次的是：</p>
+<pre><code><span class="comment">// This is the process running the current foreground app.  We'd really</span>
+<span class="comment">// rather not kill it!</span>
+<span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> FOREGROUND_APP_ADJ = <span class="number">0</span>;
+</code></pre><p>也就是说，前台进程是最后了，逼不得已的情况下才会去释放它占用的内存的。前台进程就是当前正在前台显示的，用户正在操作的界面，或者是一个前台的服务。</p>
+<p>Android系统要求前台服务必须要发送一个Notification，以便告知用户有应用一直在运行中，让用户感知到这个应用可能会耗费他的电池或流量。但是有些时候，我们确实想隐藏这种Notification，还要保持在前台服务的运行，因为常驻通知栏的图标，有的用户需要，有的用户则强烈要求去掉。</p>
+<p>我们发现，手机QQ有一个前台服务，可是状态栏和通知中心都看不到QQ的任何通知图标，用如下命令可以dump出来系统中正在运行的所有的Service ：</p>
+<p><code>adb shell dumpsys activity services</code></p>
+<p>可以看到手机QQ有三个Service：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">* ServiceRecord&#123;<span class="number">43</span>a6db20 u0 com.tencent.mobileqq/.app.CoreService&#125;</span><br><span class="line">intent=&#123;cmp=com.tencent.mobileqq/.app.CoreService&#125;</span><br><span class="line">packageName=com.tencent.mobileqq</span><br><span class="line">processName=com.tencent.mobileqq</span><br><span class="line">baseDir=/data/app/com.tencent.mobileqq-<span class="number">2.</span>apk</span><br><span class="line">dataDir=/data/data/com.tencent.mobileqq</span><br><span class="line">app=ProcessRecord&#123;<span class="number">435</span>c1a98 <span class="number">8126</span>:com.tencent.mobileqq/u0a10145&#125;</span><br><span class="line">createTime=-<span class="number">9</span>m52s660ms lastActivity=-<span class="number">4</span>m52s742ms</span><br><span class="line">executingStart=-<span class="number">4</span>m52s742ms restartTime=-<span class="number">9</span>m52s660ms</span><br><span class="line">startRequested=<span class="literal">true</span> stopIfKilled=<span class="literal">false</span> callStart=<span class="literal">true</span> lastStartId=<span class="number">7</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">* ServiceRecord&#123;<span class="number">4378</span>c818 u0 com.tencent.mobileqq/.app.CoreService$KernelService&#125;</span><br><span class="line">intent=&#123;cmp=com.tencent.mobileqq/.app.CoreService$KernelService&#125;</span><br><span class="line">packageName=com.tencent.mobileqq</span><br><span class="line">processName=com.tencent.mobileqq</span><br><span class="line">baseDir=/data/app/com.tencent.mobileqq-<span class="number">2.</span>apk</span><br><span class="line">dataDir=/data/data/com.tencent.mobileqq</span><br><span class="line">app=ProcessRecord&#123;<span class="number">435</span>c1a98 <span class="number">8126</span>:com.tencent.mobileqq/u0a10145&#125;</span><br><span class="line">isForeground=<span class="literal">true</span> foregroundId=<span class="number">537041609</span> foregroundNoti=Notification(pri=<span class="number">0</span> icon=<span class="number">7f</span>020314 contentView=com.tencent.mobileqq/<span class="number">0x10900b4</span> vibrate=null sound=null defaults=<span class="number">0x0</span> flags=<span class="number">0x62</span> when=<span class="number">1429702926311</span> ledARGB=<span class="number">0x0</span> contentIntent=Y deleteIntent=N contentTitle=QQ正在执行中 contentText=触控来取得更多信息，或停止应用程序 tickerText=N kind=[null])</span><br><span class="line">createTime=-<span class="number">9</span>m51s902ms lastActivity=-<span class="number">9</span>m51s902ms</span><br><span class="line">executingStart=-<span class="number">9</span>m51s897ms restartTime=-<span class="number">9</span>m51s902ms</span><br><span class="line">startRequested=<span class="literal">true</span> stopIfKilled=<span class="literal">true</span> callStart=<span class="literal">true</span> lastStartId=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">* ServiceRecord&#123;<span class="number">43</span>a12670 u0 com.tencent.mobileqq/.msf.service.MsfService&#125;</span><br><span class="line">intent=&#123;cmp=com.tencent.mobileqq/.msf.service.MsfService&#125;</span><br><span class="line">packageName=com.tencent.mobileqq</span><br><span class="line">processName=com.tencent.mobileqq:MSF</span><br><span class="line">baseDir=/data/app/com.tencent.mobileqq-<span class="number">2.</span>apk</span><br><span class="line">dataDir=/data/data/com.tencent.mobileqq</span><br><span class="line">app=ProcessRecord&#123;<span class="number">432900e0</span> <span class="number">3974</span>:com.tencent.mobileqq:MSF/u0a10145&#125;</span><br><span class="line">createTime=-<span class="number">8</span>d3h5m17s705ms lastActivity=-<span class="number">9</span>m50s414ms</span><br><span class="line">……………………</span><br></pre></td></tr></table></figure>
+<p>注意上面的标红的 .app.CoreService$KernelService ，其中有一个 isForeground=true 属性，其值为true，并且也设置了 foregroundNoti 的值，从这个Notification也看不出来有什么异常。<br>一开始以为他们用了什么手段搞了个看不见的通知，比如透明的图标或者高度为0的RemoteView，我也按这种思路去尝试了下，总有一个占位的Notification在。再 dump 出 Notification ：</p>
+<p><code>adb shell dumpsys statusbar</code></p>
+<p>查看 Notification list ，可以看到我做的透明的通知，却看不到有他们的任何 StatusBarNotification 那么它是怎么做到隐藏这个通知的呢？试试反编，看看他们的代码！</p>
+<p>于是我就用 Android反编工具 试着反编手机QQ最新版 5.5.1.2435 ，直接就失败了，因为他们做了反apkTool的工作，无法用apkTool去解压他们的apk包。没关系，那我就直接解压缩QQ的安装包，毕竟apk也就是一种zip格式嘛。unzip解压后，可以看到目录中有一个 9.9M 的 classes.dex , 用 dex2jar 2.0 反编译它： </p>
+<p><code>./decompileAndroid/dex2jar-2.0/d2j-dex2jar.sh -o source.jar classes.dex</code></p>
+<p>竟然成功了！！用JD—GUI，打开这个source.jar文件，找到 CoreService 和其内部类 KernelService ： com.tencent.mobileqq.app.CoreService 、 com.tencent.mobileqq.app.CoreService$KernelService ,代码内容我就不贴出来了，有兴趣的同学可以自己动动手或者从附件中下载。这里我只说下我理解的大致过程：</p>
 <p>1、 CoreService 是一个假的Service，应用启动时即开始启动这个Service，这个Service 会在 onCreate() 中就 startForeground() ，传的 Notification 是 new 出的一个空的通知，通知 ID 为固定的值。</p>
 <p>2、 启动完 CoreService 就开始启动真正的 KernelService</p>
 <p>3、 KernelService中将 CoreService 再次 startForeground() ，然后再把自己 startForeground() ，最后再把 CoreService stopForeground() 掉。这是非常关键的一步。同时，要确保两个 Service startForeground()时使用的 Notification ID 都是同一个！</p>
-<pre><code>最终，仿照手机QQ的实现代码为： 
-</code></pre><p>public class MessageCenterService extends Service {</p>
-<pre><code><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String sTAG = <span class="string">"MessageCenterService"</span>;
-
-<span class="comment">//9521 就是你的终身代号 :)</span>
-<span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> NOTIFY_ID = <span class="number">9521</span>;
-
-<span class="keyword">private</span> <span class="keyword">static</span> MessageCenterService instance;
-
-<span class="keyword">public</span> <span class="keyword">static</span> <span class="function">MessageCenterService <span class="title">getInstance</span><span class="params">()</span> </span>{
-    <span class="keyword">return</span> instance;
-}
-
-<span class="comment">/**
- * 启动前台服务
- */</span>
-<span class="keyword">public</span> <span class="keyword">static</span> <span class="function"><span class="keyword">void</span> <span class="title">start</span><span class="params">()</span> </span>{
-    <span class="keyword">try</span> {
-        Intent intent = <span class="keyword">new</span> Intent(App.getContext(), MessageCenterService.class);
-        App.getContext().startService(intent);
-    } <span class="keyword">catch</span> (Exception e) {
-        LogUtil.e(sTAG, <span class="string">""</span>, e);
-    }
-}
-
-<span class="comment">/**
- * 终止前台服务。包含{<span class="doctag">@link</span> MessageCenterService.KernelService}
- */</span>
-<span class="keyword">public</span> <span class="keyword">static</span> <span class="function"><span class="keyword">void</span> <span class="title">stop</span><span class="params">()</span> </span>{
-    <span class="keyword">try</span> {
-        Intent intent = <span class="keyword">new</span> Intent(App.getContext(), MessageCenterService.class);
-        App.getContext().stopService(intent);
-
-        stopKernel();
-    } <span class="keyword">catch</span> (Exception e) {
-        LogUtil.e(sTAG, <span class="string">""</span>, e);
-    }
-}
-
-<span class="keyword">static</span> <span class="function"><span class="keyword">void</span> <span class="title">startKernel</span><span class="params">()</span> </span>{
-    <span class="keyword">try</span> {
-        Intent intent = <span class="keyword">new</span> Intent(App.getContext(), KernelService.class);
-        App.getContext().startService(intent);
-    } <span class="keyword">catch</span> (Exception e) {
-        LogUtil.e(sTAG, <span class="string">""</span>, e);
-    }
-}
-
-<span class="keyword">static</span> <span class="function"><span class="keyword">void</span> <span class="title">stopKernel</span><span class="params">()</span> </span>{
-    <span class="keyword">try</span> {
-        Intent intent = <span class="keyword">new</span> Intent(App.getContext(), KernelService.class);
-        App.getContext().stopService(intent);
-    } <span class="keyword">catch</span> (Exception e) {
-        LogUtil.e(sTAG, <span class="string">""</span>, e);
-    }
-}
-
-<span class="annotation">@Override</span>
-<span class="keyword">public</span> <span class="function"><span class="keyword">void</span> <span class="title">onCreate</span><span class="params">()</span> </span>{
-    <span class="keyword">super</span>.onCreate();
-    instance = <span class="keyword">this</span>;
-    <span class="keyword">if</span> (Build.VERSION.SDK_INT &lt; Build.VERSION_CODES.JELLY_BEAN_MR2) {
-        startForeground(NOTIFY_ID, <span class="keyword">new</span> Notification());
-    }
-}
-
-<span class="annotation">@Override</span>
-<span class="keyword">public</span> <span class="function"><span class="keyword">int</span> <span class="title">onStartCommand</span><span class="params">(Intent intent, <span class="keyword">int</span> flags, <span class="keyword">int</span> startId)</span> </span>{
-    <span class="comment">//启动真正的Service</span>
-    startKernel();
-    <span class="function"><span class="keyword">return</span> <span class="keyword">super</span>.<span class="title">onStartCommand</span><span class="params">(intent, flags, startId)</span></span>;
-}
-
-<span class="annotation">@Override</span>
-<span class="keyword">public</span> <span class="function"><span class="keyword">void</span> <span class="title">onDestroy</span><span class="params">()</span> </span>{
-    <span class="keyword">if</span> (Build.VERSION.SDK_INT &lt; Build.VERSION_CODES.JELLY_BEAN_MR2) {
-        stopForeground(<span class="keyword">true</span>);
-    }
-    <span class="keyword">super</span>.onDestroy();
-}
-
-<span class="annotation">@Override</span>
-<span class="keyword">public</span> <span class="function">IBinder <span class="title">onBind</span><span class="params">(Intent intent)</span> </span>{
-    <span class="keyword">return</span> <span class="keyword">null</span>;
-}
-
-
-<span class="comment">/**
- *
- */</span>
-<span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">KernelService</span> <span class="keyword">extends</span> <span class="title">Service</span> </span>{
-    <span class="keyword">private</span> <span class="keyword">static</span> KernelService instance;
-
-    <span class="keyword">public</span> <span class="keyword">static</span> <span class="function">KernelService <span class="title">getInstance</span><span class="params">()</span> </span>{
-        <span class="keyword">return</span> instance;
-    }
-
-    <span class="annotation">@Override</span>
-    <span class="keyword">public</span> <span class="function"><span class="keyword">void</span> <span class="title">onCreate</span><span class="params">()</span> </span>{
-        <span class="keyword">super</span>.onCreate();
-        instance = <span class="keyword">this</span>;
-    }
-
-    <span class="annotation">@Override</span>
-    <span class="keyword">public</span> <span class="function"><span class="keyword">int</span> <span class="title">onStartCommand</span><span class="params">(Intent intent, <span class="keyword">int</span> flags, <span class="keyword">int</span> startId)</span> </span>{
-        <span class="keyword">super</span>.onStartCommand(intent, flags, startId);
-        <span class="keyword">try</span> {
-            MessageCenterService fakeService = MessageCenterService.getInstance();
-            fakeService.startForeground(NOTIFY_ID, <span class="keyword">new</span> Notification());
-            startForeground(NOTIFY_ID, <span class="keyword">new</span> Notification());
-            fakeService.stopForeground(<span class="keyword">true</span>);
-        } <span class="keyword">catch</span> (Exception e) {
-            LogUtil.e(sTAG, <span class="string">" **** Can not start foreground service !! ****"</span>, e);
-        }
-        <span class="keyword">return</span> START_STICKY;
-    }
-
-    <span class="annotation">@Override</span>
-    <span class="keyword">public</span> <span class="function"><span class="keyword">void</span> <span class="title">onDestroy</span><span class="params">()</span> </span>{
-        stopForeground(<span class="keyword">true</span>);
-        instance = <span class="keyword">null</span>;
-        <span class="keyword">super</span>.onDestroy();
-    }
-
-    <span class="annotation">@Override</span>
-    <span class="keyword">public</span> <span class="function">IBinder <span class="title">onBind</span><span class="params">(Intent intent)</span> </span>{
-        <span class="keyword">return</span> <span class="keyword">null</span>;
-    }
-}
-</code></pre><p>}</p>
-<p>里面有一些自己的工具类什么的，大家可以替换为自己的东西，同时别忘了在 AndroidManifest.xml中定义下这两个Service：<br>       <service android:name=".service.MessageCenterService$KernelService" android:label="@string/message_center_service" android:exported="false"><br>        <service android:name=".service.MessageCenterService" android:label="@string/message_center_service" android:exported="false"></service></service></p>
-<pre><code>今天又去stackOverflow上有针对性的查了下这个方法，还真有人说过这种处理方式：
-
-  http:<span class="comment">//stackoverflow.com/a/18281520</span>
-
-
-以上就可以实现一个隐藏的前台服务，增加应用的存活率。看下LowMemoryKiller的分析后，你就应该知道，无论是那种级别的进程，都会有一个内存占用的阈值的，超过这个阈值同样会被杀，所以，优化好应用的内存使用也同样重要。
-
-各位有什么问题或建议，请留言，Thanks ~
+<p>最终，仿照手机QQ的实现代码为： </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MessageCenterService</span> <span class="keyword">extends</span> <span class="title">Service</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String sTAG = <span class="string">"MessageCenterService"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//9521 就是你的终身代号 :)</span></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> NOTIFY_ID = <span class="number">9521</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> MessageCenterService instance;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> MessageCenterService <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> instance;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * 启动前台服务</span><br><span class="line">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">start</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            Intent intent = <span class="keyword">new</span> Intent(App.getContext(), MessageCenterService.class);</span><br><span class="line">            App.getContext().startService(intent);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            LogUtil.e(sTAG, <span class="string">""</span>, e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     * 终止前台服务。包含&#123;<span class="doctag">@link</span> MessageCenterService.KernelService&#125;</span><br><span class="line">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">stop</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            Intent intent = <span class="keyword">new</span> Intent(App.getContext(), MessageCenterService.class);</span><br><span class="line">            App.getContext().stopService(intent);</span><br><span class="line"></span><br><span class="line">            stopKernel();</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            LogUtil.e(sTAG, <span class="string">""</span>, e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">startKernel</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            Intent intent = <span class="keyword">new</span> Intent(App.getContext(), KernelService.class);</span><br><span class="line">            App.getContext().startService(intent);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            LogUtil.e(sTAG, <span class="string">""</span>, e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">stopKernel</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            Intent intent = <span class="keyword">new</span> Intent(App.getContext(), KernelService.class);</span><br><span class="line">            App.getContext().stopService(intent);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            LogUtil.e(sTAG, <span class="string">""</span>, e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="annotation">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate();</span><br><span class="line">        instance = <span class="keyword">this</span>;</span><br><span class="line">        <span class="keyword">if</span> (Build.VERSION.SDK_INT &lt; Build.VERSION_CODES.JELLY_BEAN_MR2) &#123;</span><br><span class="line">            startForeground(NOTIFY_ID, <span class="keyword">new</span> Notification());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="annotation">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">onStartCommand</span><span class="params">(Intent intent, <span class="keyword">int</span> flags, <span class="keyword">int</span> startId)</span> </span>&#123;</span><br><span class="line">        <span class="comment">//启动真正的Service</span></span><br><span class="line">        startKernel();</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">super</span>.onStartCommand(intent, flags, startId);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="annotation">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onDestroy</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (Build.VERSION.SDK_INT &lt; Build.VERSION_CODES.JELLY_BEAN_MR2) &#123;</span><br><span class="line">            stopForeground(<span class="keyword">true</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">super</span>.onDestroy();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="annotation">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> IBinder <span class="title">onBind</span><span class="params">(Intent intent)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span><br><span class="line">     *</span><br><span class="line">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">KernelService</span> <span class="keyword">extends</span> <span class="title">Service</span> </span>&#123;</span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">static</span> KernelService instance;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> KernelService <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> instance;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="annotation">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">super</span>.onCreate();</span><br><span class="line">            instance = <span class="keyword">this</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="annotation">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">onStartCommand</span><span class="params">(Intent intent, <span class="keyword">int</span> flags, <span class="keyword">int</span> startId)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">super</span>.onStartCommand(intent, flags, startId);</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                MessageCenterService fakeService = MessageCenterService.getInstance();</span><br><span class="line">                fakeService.startForeground(NOTIFY_ID, <span class="keyword">new</span> Notification());</span><br><span class="line">                startForeground(NOTIFY_ID, <span class="keyword">new</span> Notification());</span><br><span class="line">                fakeService.stopForeground(<span class="keyword">true</span>);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">                LogUtil.e(sTAG, <span class="string">" **** Can not start foreground service !! ****"</span>, e);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> START_STICKY;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="annotation">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onDestroy</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            stopForeground(<span class="keyword">true</span>);</span><br><span class="line">            instance = <span class="keyword">null</span>;</span><br><span class="line">            <span class="keyword">super</span>.onDestroy();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="annotation">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> IBinder <span class="title">onBind</span><span class="params">(Intent intent)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>里面有一些自己的工具类什么的，大家可以替换为自己的东西，同时别忘了在 AndroidManifest.xml中定义下这两个Service：</p>
+<pre><code class="xml"><span class="tag">&lt;<span class="title">service</span>
+     <span class="attribute">android:name</span>=<span class="value">".service.MessageCenterService$KernelService"</span>
+     <span class="attribute">android:label</span>=<span class="value">"@string/message_center_service"</span>
+     <span class="attribute">android:exported</span>=<span class="value">"false"</span>/&gt;</span>
+ <span class="tag">&lt;<span class="title">service</span>
+     <span class="attribute">android:name</span>=<span class="value">".service.MessageCenterService"</span>
+     <span class="attribute">android:label</span>=<span class="value">"@string/message_center_service"</span>
+     <span class="attribute">android:exported</span>=<span class="value">"false"</span>/&gt;</span>
 </code></pre>
+<p>今天又去stackOverflow上有针对性的查了下这个方法，还真有人说过这种处理方式：</p>
+<pre><code>[<span class="link_label">http://stackoverflow.com/a/18281520</span>](<span class="link_url">http://stackoverflow.com/a/18281520</span>)
+</code></pre><p>以上就可以实现一个隐藏的前台服务，增加应用的存活率。看下LowMemoryKiller的分析后，你就应该知道，无论是那种级别的进程，都会有一个内存占用的阈值的，超过这个阈值同样会被杀，所以，优化好应用的内存使用也同样重要。</p>
+
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2015/11/17/android-hidden-foreground-service/" data-id="cih3c0su90003ruasw7hgtw8m" class="article-share-link">Share</a>
+      <a data-url="http://jinzhaoyu.github.io/2015/11/17/android-hidden-foreground-service/" data-id="cih3c0su90003ruasw7hgtw8m" class="article-share-link">Share</a>
       
       
     </footer>
