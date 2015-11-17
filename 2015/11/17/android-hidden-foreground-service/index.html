@@ -3,17 +3,21 @@
 <head>
   <meta charset="utf-8">
   
-  <title>鱼塘</title>
+  <title>Android - 琢磨隐藏前台服务的过程-隐藏的! | 鱼塘</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description">
-<meta property="og:type" content="website">
-<meta property="og:title" content="鱼塘">
-<meta property="og:url" content="http://www.jinzhaoyu.com/index.html">
+  <meta name="description" content="在国内，Android平台下的应用因为种种原因，都必须要各自做各自的推送通道。然而，由于Android系统的特性，这些需要保持通道连接的应用，又要想方设法的防止被系统杀掉。（这时候真的觉得Apple的APNs 是一个神一样的存在！）
+于是乎各种综合手段就都会用上了，比如分出一个守护进程，这个进程做的都是轻量的事情，甚至只检测主要进程的存活性。同时又在这个进程中启动一个前台服务（Foreground">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android - 琢磨隐藏前台服务的过程-隐藏的!">
+<meta property="og:url" content="http://www.jinzhaoyu.com/2015/11/17/android-hidden-foreground-service/index.html">
 <meta property="og:site_name" content="鱼塘">
-<meta property="og:description">
+<meta property="og:description" content="在国内，Android平台下的应用因为种种原因，都必须要各自做各自的推送通道。然而，由于Android系统的特性，这些需要保持通道连接的应用，又要想方设法的防止被系统杀掉。（这时候真的觉得Apple的APNs 是一个神一样的存在！）
+于是乎各种综合手段就都会用上了，比如分出一个守护进程，这个进程做的都是轻量的事情，甚至只检测主要进程的存活性。同时又在这个进程中启动一个前台服务（Foreground">
+<meta property="og:updated_time" content="2015-11-17T11:46:45.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="鱼塘">
-<meta name="twitter:description">
+<meta name="twitter:title" content="Android - 琢磨隐藏前台服务的过程-隐藏的!">
+<meta name="twitter:description" content="在国内，Android平台下的应用因为种种原因，都必须要各自做各自的推送通道。然而，由于Android系统的特性，这些需要保持通道连接的应用，又要想方设法的防止被系统杀掉。（这时候真的觉得Apple的APNs 是一个神一样的存在！）
+于是乎各种综合手段就都会用上了，比如分出一个守护进程，这个进程做的都是轻量的事情，甚至只检测主要进程的存活性。同时又在这个进程中启动一个前台服务（Foreground">
   
     <link rel="alternative" href="/atom.xml" title="鱼塘" type="application/atom+xml">
   
@@ -63,9 +67,7 @@
   </div>
 </header>
       <div class="outer">
-        <section id="main">
-  
-    <article id="post-android-hidden-foreground-service" class="article article-type-post" itemscope itemprop="blogPost">
+        <section id="main"><article id="post-android-hidden-foreground-service" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2015/11/17/android-hidden-foreground-service/" class="article-date">
   <time datetime="2015-11-17T11:46:45.000Z" itemprop="datePublished">2015-11-17</time>
@@ -78,8 +80,8 @@
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2015/11/17/android-hidden-foreground-service/">Android - 琢磨隐藏前台服务的过程-隐藏的!</a>
+    <h1 class="article-title" itemprop="name">
+      Android - 琢磨隐藏前台服务的过程-隐藏的!
     </h1>
   
 
@@ -263,75 +265,20 @@ Android 系统的内存回收真正的执行者是 <span class="function"><span 
     </footer>
   </div>
   
-</article>
-
-
+    
+<nav id="article-nav">
   
-    <article id="post-android-multidex-noclassdeffound" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2015/11/17/android-multidex-noclassdeffound/" class="article-date">
-  <time datetime="2015-11-17T11:45:36.000Z" itemprop="datePublished">2015-11-17</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2015/11/17/android-multidex-noclassdeffound/">Android - 支持multidex后NoClassDefFoundError的解决办法</a>
-    </h1>
+    <a href="/2015/11/17/android-multidex-noclassdeffound/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Android - 支持multidex后NoClassDefFoundError的解决办法</div>
+    </a>
   
+</nav>
 
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="问题">问题</h2><p>Android应用支持multiDex以后，在某些5.0以下的机型上，会遇到某些类由于没有被打进MainDex中，而导致的 NoClassDefFoundError 错误。</p>
-<p><strong><em>更多关于 ClassNotFoundException 和 NoClassDefFoundError 的讨论 <a href="http://stackoverflow.com/a/1457879/5571166" target="_blank" rel="external">可以到这里查看</a>.</em></strong></p>
-<h2 id="解决方式">解决方式</h2><h3 id="过时的方式">过时的方式</h3><p>在使用Android gradle build tools 1.2.3 版本的时候，我们在 build.gradle 的 <code>defaultConfig</code> 中加入一个非公开属性 <code>multiDexKeepFile</code></p>
-<blockquote>
-<p>multiDexKeepFile file(“multidex.keep”)</p>
-</blockquote>
-<p>这个<code>multidex.keep</code>的内容，是要保持类在MainDex中的Class列表，如：</p>
-<pre><code>com<span class="regexp">/alibaba/</span>mobileim<span class="regexp">/channel/</span>util/SimpleKVStore.<span class="keyword">class</span>
-com<span class="regexp">/alibaba/</span>mobileim<span class="regexp">/channel/</span>util/SimpleKVStore$SingletonHolder.<span class="keyword">class</span>
-android<span class="regexp">/webkit/</span>JniUtil.<span class="keyword">class</span>
-mtopsdk<span class="regexp">/xstate/</span>XState.<span class="keyword">class</span>
-android<span class="regexp">/app/</span>ANRManagerProxy.<span class="keyword">class</span>
-</code></pre><h3 id="新的方式">新的方式</h3><p>但是随着升级 build tools 到 1.3.+ 的版本以后，这个功能就失效了。</p>
-<h4 id="分析">分析</h4><p>查询了代码 1.2.3 和 1.3.1 的 build tools源码后，发现原来在 1.2.3版本 <a href="https://android.googlesource.com/platform/tools/base/+/gradle_1.2.3/build-system/gradle-core/src/main/groovy/com/android/build/gradle/internal/TaskManager.groovy" target="_blank" rel="external">TaskManager.groovy</a> 中 createPostCompilationTasks()方法里读取 <code>multiDexKeepFile</code>属性的代码都被干掉了。</p>
-<blockquote>
-<p>File multiDexKeepFile = config.getMultiDexKeepFile();</p>
-</blockquote>
-<p>1.3.0 及以后的版本中，优化了代码结构，设计了一些<a href="https://android.googlesource.com/platform/tools/base/+/gradle_1.3.1/build-system/gradle-core/src/main/groovy/com/android/build/gradle/internal/tasks/multidex/" target="_blank" rel="external">新的用于处理MultiDex的Task类</a>:</p>
-<pre><code>CreateMainDexList<span class="class">.groovy</span>
-CreateManifestKeepList<span class="class">.groovy</span>
-JarMergingTask<span class="class">.groovy</span>
-RetraceMainDexList.groovy
-</code></pre><p>通过查看<a href="https://android.googlesource.com/platform/tools/base/+/gradle_1.3.1/build-system/gradle-core/src/main/groovy/com/android/build/gradle/internal/tasks/multidex/CreateMainDexList.groovy" target="_blank" rel="external">CreateMainDexList.groovy</a> 可以看出这个任务最终<br>会生成一个存储了所有应该在MainDex中的类列表的文件：<code>maindexlist.txt</code>。</p>
-<p>生成的文件路径是从 <a href="https://android.googlesource.com/platform/tools/base/+/gradle_1.3.1/build-system/gradle-core/src/main/groovy/com/android/build/gradle/internal/scope/VariantScope.java" target="_blank" rel="external">VariantScope.java </a> 的<code>getMainDexListFile()</code>中获取的:<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="annotation">@NonNull</span></span><br><span class="line">   <span class="function"><span class="keyword">public</span> File <span class="title">getMainDexListFile</span><span class="params">()</span> </span>&#123;</span><br><span class="line">       <span class="keyword">return</span> <span class="keyword">new</span> File(globalScope.getIntermediatesDir(), <span class="string">"multi-dex/"</span> + </span><br><span class="line">       getVariantConfiguration().getDirName() + <span class="string">"/maindexlist.txt"</span>);</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure></p>
-<p>最终生成的这个 <code>maindexlist.txt</code> 文件会被<a href="https://android.googlesource.com/platform/tools/base/+/gradle_1.3.1/build-system/builder/src/main/java/com/android/builder/core/DexProcessBuilder.java" target="_blank" rel="external">DexProcessBuilder.java</a>通过<code>--multi-dex --main-dex-list</code>参数传递给Build tools中的 <code>dx.jar</code>(在Android sdk跟目录下有个<code>build-tools</code>目录，你可以在这里找到这个jar)，<code>dx.jar</code>会用这个列表文件生成MainDex。</p>
-<h4 id="解决思路">解决思路</h4><p>关键的来了，我们知道新的build tools是通过 <code>createMainDexList</code> 这个Task来生成的<code>maindexlist.txt</code>，然后才给 <code>dx.jar</code>去读取生成 MainDex，那么我们是不是可以hack一下构建过程，在 <code>createMainDexList</code> 执行完以后，我们去修改<code>maindexlist.txt</code>文件，以达到手工设置MainDex内容的目的呢？</p>
-<h4 id="代码实现">代码实现</h4><p>结合gradle的构建过程，原来的<code>multidex.keep</code>文件位置和内容不变，最终实现代码如下：<br><figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">afterEvaluate &#123;</span><br><span class="line">    tasks.matching&#123;</span><br><span class="line">        it.name.startsWith(<span class="string">'create'</span>) &amp;&amp; it.name.endsWith(<span class="string">'MainDexClassList'</span>)</span><br><span class="line">    &#125;.each &#123; tk -&gt;</span><br><span class="line">        tk.doLast &#123;</span><br><span class="line">            keepMainMultiDex(tk.outputFile);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span><br><span class="line"> * 控制MainDex中的class列表</span><br><span class="line"> * 将multidex.keep的内容追加到 maindexlist.txt 中</span><br><span class="line"> * <span class="doctag">@param</span> outputFile</span><br><span class="line"> */</span></span><br><span class="line"><span class="keyword">def</span> keepMainMultiDex(File outputFile)&#123;</span><br><span class="line">    File keepFile = file(<span class="string">"multidex.keep"</span>);</span><br><span class="line">    outputFile &lt;&lt; <span class="string">'\n'</span></span><br><span class="line">    outputFile &lt;&lt; keepFile.getText(<span class="string">'UTF-8'</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>打完收工~</p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://www.jinzhaoyu.com/2015/11/17/android-multidex-noclassdeffound/" data-id="cih3balpz0001bxasd4q9e04t" class="article-share-link">Share</a>
-      
-      
-    </footer>
-  </div>
   
 </article>
 
-
-  
-  
 </section>
         
           <aside id="sidebar">
