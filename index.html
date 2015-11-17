@@ -68,7 +68,7 @@
     <article id="post-android-hidden-foreground-service" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2015/11/17/android-hidden-foreground-service/" class="article-date">
-  <time datetime="2015-11-17T12:12:32.000Z" itemprop="datePublished">2015-11-17</time>
+  <time datetime="2015-11-17T12:20:01.000Z" itemprop="datePublished">2015-11-17</time>
 </a>
     
   </div>
@@ -115,14 +115,14 @@
      <span class="attribute">android:name</span>=<span class="value">".service.MessageCenterService$KernelService"</span>
      <span class="attribute">android:label</span>=<span class="value">"@string/message_center_service"</span>
      <span class="attribute">android:exported</span>=<span class="value">"false"</span>/&gt;</span>
- <span class="tag">&lt;<span class="title">service</span>
+<span class="tag">&lt;<span class="title">service</span>
      <span class="attribute">android:name</span>=<span class="value">".service.MessageCenterService"</span>
      <span class="attribute">android:label</span>=<span class="value">"@string/message_center_service"</span>
      <span class="attribute">android:exported</span>=<span class="value">"false"</span>/&gt;</span>
 </code></pre>
 <p>今天又去stackOverflow上有针对性的查了下这个方法，还真有人说过这种处理方式：</p>
-<pre><code>[<span class="link_label">http://stackoverflow.com/a/18281520</span>](<span class="link_url">http://stackoverflow.com/a/18281520</span>)
-</code></pre><p>以上就可以实现一个隐藏的前台服务，增加应用的存活率。看下LowMemoryKiller的分析后，你就应该知道，无论是那种级别的进程，都会有一个内存占用的阈值的，超过这个阈值同样会被杀，所以，优化好应用的内存使用也同样重要。</p>
+<p><a href="http://stackoverflow.com/a/18281520" target="_blank" rel="external">http://stackoverflow.com/a/18281520</a></p>
+<p>以上就可以实现一个隐藏的前台服务，增加应用的存活率。看下LowMemoryKiller的分析后，你就应该知道，无论是那种级别的进程，都会有一个内存占用的阈值的，超过这个阈值同样会被杀，所以，优化好应用的内存使用也同样重要。</p>
 
       
     </div>

@@ -224,7 +224,7 @@ public class MessageCenterService extends Service {
             android:name=".service.MessageCenterService$KernelService"
             android:label="@string/message_center_service"
             android:exported="false"/>
-        <service
+       <service
             android:name=".service.MessageCenterService"
             android:label="@string/message_center_service"
             android:exported="false"/>
@@ -232,7 +232,7 @@ public class MessageCenterService extends Service {
 
 今天又去stackOverflow上有针对性的查了下这个方法，还真有人说过这种处理方式：
 
-    [http://stackoverflow.com/a/18281520](http://stackoverflow.com/a/18281520)
+[http://stackoverflow.com/a/18281520](http://stackoverflow.com/a/18281520)
 
 以上就可以实现一个隐藏的前台服务，增加应用的存活率。看下LowMemoryKiller的分析后，你就应该知道，无论是那种级别的进程，都会有一个内存占用的阈值的，超过这个阈值同样会被杀，所以，优化好应用的内存使用也同样重要。
 
