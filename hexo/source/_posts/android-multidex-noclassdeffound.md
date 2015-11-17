@@ -1,4 +1,5 @@
 title: Android - 支持multidex后NoClassDefFoundError的解决办法
+tags: Android multidex NoClassDefFoundError
 ---
 
 ## 问题
